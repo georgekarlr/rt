@@ -1,130 +1,162 @@
-import React from 'react'
-import { useAuth } from '../contexts/AuthContext'
-import { BarChart3, Users, TrendingUp, DollarSign } from 'lucide-react'
+import React, { useEffect, useState } from 'react';
+import { DashboardService } from '../services/dashboardService.ts'; // Adjust path as needed
+import type { DashboardStats } from '../types/dashboard.ts'; // Adjust path as needed
 
-const Dashboard: React.FC = () => {
-  const { user, persona } = useAuth()
+// --- Helper: Currency Formatter ---
+const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+    }).format(amount);
+};
 
-  const stats = [
-    { name: 'Total Users', value: '1,234', icon: Users, change: '+12%' },
-    { name: 'Revenue', value: '$12,345', icon: DollarSign, change: '+8%' },
-    { name: 'Growth Rate', value: '23.5%', icon: TrendingUp, change: '+3%' },
-    { name: 'Analytics', value: '98.2%', icon: BarChart3, change: '-2%' },
-  ]
-
-  return (
-    <div className="space-y-6">
-      {/* Welcome Message */}
-      <div className="bg-white overflow-hidden shadow-sm rounded-lg">
-        <div className="px-6 py-8 sm:px-8">
-          <div className="flex items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Welcome back, {user?.email?.split('@')[0]}
-                {persona && (
-                  <span className="text-lg font-normal text-gray-600 ml-2">
-                    ({persona.type === 'admin' ? 'Administrator' : 'Staff Member'})
-                  </span>
-                )}
-              </h1>
-              <p className="mt-1 text-sm text-gray-600">
-                {persona?.type === 'admin' 
-                  ? "Here's your administrative dashboard overview."
-                  : "Here's your staff dashboard overview."
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon
-          return (
-            <div key={stat.name} className="bg-white overflow-hidden shadow-sm rounded-lg">
-              <div className="p-6">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Icon className="h-6 w-6 text-blue-600" />
-                    </div>
-                  </div>
-                  <div className="ml-4 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        {stat.name}
-                      </dt>
-                      <dd className="flex items-baseline">
-                        <div className="text-2xl font-semibold text-gray-900">
-                          {stat.value}
-                        </div>
-                        <div className={`ml-2 flex items-baseline text-sm font-semibold ${
-                          stat.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {stat.change}
-                        </div>
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Content Areas */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Recent Activity */}
-        <div className="bg-white shadow-sm rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="h-2 w-2 bg-green-500 rounded-full"></div>
-                <p className="text-sm text-gray-600">User registration increased by 12%</p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
-                <p className="text-sm text-gray-600">New feature deployed successfully</p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="h-2 w-2 bg-yellow-500 rounded-full"></div>
-                <p className="text-sm text-gray-600">Server maintenance completed</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white shadow-sm rounded-lg">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
-          </div>
-          <div className="p-6">
-            <div className="space-y-3">
-              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors">
-                Create new project
-              </button>
-              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors">
-                Invite team member
-              </button>
-              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors">
-                View analytics
-              </button>
-              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md transition-colors">
-                Export data
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+// --- Component: Stat Card ---
+interface StatCardProps {
+    title: string;
+    value: number;
+    type?: 'currency' | 'count';
+    color?: string; // Tailwind border color class like 'border-blue-500'
 }
 
-export default Dashboard
+const StatCard: React.FC<StatCardProps> = ({ title, value, type = 'currency', color = 'border-gray-200' }) => {
+    return (
+        <div className={`bg-white p-6 rounded-lg shadow-sm border-l-4 ${color}`}>
+            <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{title}</h3>
+            <div className="mt-2 text-3xl font-bold text-gray-900">
+                {type === 'currency' ? formatCurrency(value) : value}
+            </div>
+        </div>
+    );
+};
+
+// --- Main Component: Dashboard Stats Grid ---
+const Dashboard: React.FC = () => {
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Default Date Range: First day of current month to today
+    const [dateRange, setDateRange] = useState({
+        start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+        end: new Date().toISOString().split('T')[0],
+    });
+
+    useEffect(() => {
+        fetchDashboardData();
+    }, [dateRange]);
+
+    const fetchDashboardData = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            // Append time to ensure full coverage of the selected end date
+            const start = new Date(dateRange.start);
+            const end = new Date(dateRange.end);
+            end.setHours(23, 59, 59, 999); // Set to end of day
+
+            const data = await DashboardService.getStats(start, end);
+            console.log('Dashboard data:', data);
+            setStats(data);
+        } catch (err: any) {
+            setError('Failed to load dashboard statistics.');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setDateRange({ ...dateRange, [e.target.name]: e.target.value });
+    };
+
+    return (
+        <div className="space-y-6">
+
+            {/* Header & Date Controls */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-2xl font-bold text-gray-800">Performance Overview</h2>
+                <div className="flex gap-2 bg-white p-2 rounded shadow-sm border border-gray-200">
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs text-gray-500">From</label>
+                        <input
+                            type="date"
+                            name="start"
+                            value={dateRange.start}
+                            onChange={handleDateChange}
+                            className="text-sm border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs text-gray-500">To</label>
+                        <input
+                            type="date"
+                            name="end"
+                            value={dateRange.end}
+                            onChange={handleDateChange}
+                            className="text-sm border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Error State */}
+            {error && (
+                <div className="p-4 text-red-700 bg-red-100 rounded-md border border-red-200">
+                    {error}
+                </div>
+            )}
+
+            {/* Loading State */}
+            {loading && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
+                    ))}
+                </div>
+            )}
+
+            {/* Data Display */}
+            {!loading && stats && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                    {/* Row 1: Period Financials */}
+                    <StatCard
+                        title="Period Sales"
+                        value={stats.period_sales}
+                        color="border-blue-500"
+                    />
+                    <StatCard
+                        title="Cash Collected"
+                        value={stats.period_cash_collected}
+                        color="border-green-500"
+                    />
+                    <StatCard
+                        title="Refunds"
+                        value={stats.period_refunds}
+                        color="border-red-400"
+                    />
+
+                    {/* Row 2: Projections & Global Stats */}
+                    <StatCard
+                        title="Collections Due (Period)"
+                        value={stats.period_installments_due}
+                        color="border-yellow-500"
+                    />
+                    <StatCard
+                        title="Total Outstanding Debt"
+                        value={stats.global_outstanding_debt}
+                        color="border-purple-500"
+                    />
+                    <StatCard
+                        title="Overdue Loans"
+                        value={stats.global_overdue_count}
+                        type="count"
+                        color="border-orange-600"
+                    />
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default Dashboard;
