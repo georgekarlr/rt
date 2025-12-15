@@ -1,6 +1,8 @@
 import React from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { Menu, LogOut, User, Shield, Users, RefreshCw } from 'lucide-react'
+import { useCurrency } from '../../hooks/useCurrency'
+import type { CurrencyCode } from '../../utils/timezone'
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -8,6 +10,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { user, signOut, persona, switchPersona } = useAuth()
+  const { currency, setCurrency, symbol } = useCurrency()
 
   const handleLogout = async () => {
     await signOut()
@@ -66,6 +69,21 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             </div>
             
             <div className="flex items-center space-x-2">
+              {/* Currency selector */}
+              <div className="hidden sm:flex items-center space-x-1 px-2 py-1 bg-gray-100 rounded-md">
+                <span className="text-sm" title="Currency symbol">{symbol}</span>
+                <select
+                  aria-label="Select currency"
+                  className="text-xs bg-transparent outline-none cursor-pointer"
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
+                >
+                  {(['PHP','USD','EUR','GBP','JPY','SGD','AUD','CAD','INR','CNY','HKD','KRW','CHF'] as CurrencyCode[]).map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
                 <User className="h-4 w-4 text-blue-600" />
               </div>
