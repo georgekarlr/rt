@@ -4,6 +4,7 @@ import type {
     CreateLeaseParams,
     ServiceResponse
 } from '../types/leases';
+import {getCurrentDate} from "../utils/datetime.ts";
 
 export class LeasesService {
 
@@ -21,7 +22,7 @@ export class LeasesService {
                 p_end_date: params.p_end_date,
                 p_rent_amount: params.p_rent_amount,
                 p_frequency: params.p_frequency,
-                p_created_at: params.p_created_at ?? new Date().toISOString()
+                p_created_at: params.p_created_at ?? getCurrentDate()
             };
 
             const { data, error } = await supabase.rpc('rt_create_lease', rpcParams);

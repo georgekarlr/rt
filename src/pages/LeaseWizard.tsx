@@ -8,6 +8,7 @@ import type { Tenant } from '../types/tenants';
 import type { CreateLeaseParams, FrequencyType } from '../types/leases';
 import { Calendar, CheckCircle2, Home, Loader2, User } from 'lucide-react';
 import { SelectPropertyStep, SelectTenantStep, LeaseTermsStep, LeaseSubmissionStep } from '../components/lease-wizard';
+import {getCurrentDate} from "../utils/datetime.ts";
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -201,23 +202,22 @@ const LeaseWizard: React.FC = () => {
     setEndDate(calculated);
   }, [startDate, frequency, paymentCount]);
 
+
   const handleSubmit = async () => {
     if (!selectedPropertyId || !selectedTenantId) return;
 
     setSubmitting(true);
     setSubmitError(null);
-    // Convert datetime-local (local time) to ISO string for backend
-    const startIso = startDate ? new Date(startDate).toISOString() : '';
-    const endIso = endDate ? new Date(endDate).toISOString() : '';
     const params: CreateLeaseParams = {
       p_property_id: selectedPropertyId,
       p_tenant_id: selectedTenantId,
-      p_start_date: startIso,
-      p_end_date: endIso,
+      p_start_date: startDate.replace('T', ' '),
+      p_end_date: endDate.replace('T', ' '),
       p_rent_amount: Number(rentAmount),
       p_frequency: frequency,
-      p_created_at: new Date().toISOString(),
+      p_created_at: getCurrentDate(),
     };
+
 
     const res = await LeasesService.createLease(params);
     setSubmitting(false);
@@ -228,7 +228,6 @@ const LeaseWizard: React.FC = () => {
     setCreatedLeaseId(res.data || null);
     // After successful creation: advance to final step and reset form data
     // so the wizard is ready for a new lease.
-    resetForm();
     setStep(4);
   };
 
@@ -360,7 +359,10 @@ const LeaseWizard: React.FC = () => {
               <button
                 className="px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
                 type="button"
-                onClick={() => navigate('/leases')}
+                onClick={() => {
+                  resetForm();
+                  navigate('/leases');
+                }}
               >
                 Go to listing page
               </button>

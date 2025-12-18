@@ -4,11 +4,12 @@ import type {
     LeaseListItem,
     LeaseScheduleItem,
     GetLeasesListParams,
-    RecordPaymentParams,
+    ProcessAutomaticPaymentParams,
     TerminateLeaseParams,
     ExtendLeaseParams,
     ServiceResponse
 } from '../types/leasesActions';
+import {getCurrentDate} from "../utils/datetime.ts";
 
 export class LeasesActionService {
 
@@ -60,36 +61,36 @@ export class LeasesActionService {
     }
 
     /**
-     * Records a payment against a specific rent schedule item.
-     * This triggers the internal triggers to update the schedule status and lease total.
+     * Processes a bulk payment for a lease.
+     * Logic: Automatically distributes the money to the oldest unpaid rent schedules first.
      */
-    static async recordPayment(params: RecordPaymentParams): Promise<ServiceResponse<number>> {
+    static async processAutomaticPayment(params: ProcessAutomaticPaymentParams): Promise<ServiceResponse<void>> {
         try {
-            const { data, error } = await supabase.rpc('rt_record_payment', {
-                p_rent_schedule_id: params.p_rent_schedule_id,
-                p_amount: params.p_amount,
+            const { error } = await supabase.rpc('rt_process_automatic_payment', {
+                p_lease_id: params.p_lease_id,
+                p_total_amount: params.p_total_amount,
                 p_payment_method: params.p_payment_method,
                 p_notes: params.p_notes ?? null,
-                p_transaction_date: params.p_transaction_date ?? new Date().toISOString()
+                p_created_at: getCurrentDate()
             });
 
             if (error) {
                 return { data: null, error: error.message };
             }
 
-            return { data: data as number, error: null };
+            return { data: null, error: null };
 
         } catch (err: any) {
             return {
                 data: null,
-                error: err.message || 'An unexpected error occurred while recording the payment.'
+                error: err.message || 'An unexpected error occurred while processing the automatic payment.'
             };
         }
     }
 
     /**
-     * Terminates a lease early, sets the end date to now, voids future payments,
-     * and sets the property status back to 'vacant'.
+     * Terminates a lease early.
+     * Sets end date to now, voids future pending payments, and marks property as vacant.
      */
     static async terminateLease(params: TerminateLeaseParams): Promise<ServiceResponse<void>> {
         try {
@@ -113,8 +114,8 @@ export class LeasesActionService {
     }
 
     /**
-     * Extends the end date of an existing lease and generates the additional
-     * rent schedule items for the extended period.
+     * Extends the end date of an existing lease.
+     * Automatically generates new rent schedule items for the extended period.
      */
     static async extendLease(params: ExtendLeaseParams): Promise<ServiceResponse<void>> {
         try {

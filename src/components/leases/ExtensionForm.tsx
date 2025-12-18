@@ -22,7 +22,7 @@ const ExtensionForm: React.FC<ExtensionFormProps> = ({ lease, onSubmit, onCancel
         e.preventDefault();
         onSubmit({
             p_lease_id: lease.id,
-            p_new_end_date: new Date(newDate).toISOString() // Convert local time to ISO for DB
+            p_new_end_date: newDate.replace('T', ' ') // Convert local time to ISO for DB
         });
     };
 
