@@ -69,8 +69,8 @@ const RentDashboard: React.FC = () => {
         // Ensure we send full ISO timestamp or date string based on API expectation
         // Appending T00:00:00 for start and T23:59:59 for end is safer for specific ranges
         const { data, error } = await DashboardService.getStats({
-            p_start_date: `${startDate}T00:00:00`,
-            p_end_date: `${endDate}T23:59:59`
+            p_start_date: `${startDate} 00:00:00`,
+            p_end_date: `${endDate} 23:59:59`
         });
 
         if (error) {

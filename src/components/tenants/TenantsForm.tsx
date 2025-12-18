@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tenant, CreateTenantParams, UpdateTenantParams } from '../../types/tenants';
 import { User, Mail, Phone, CreditCard, FileText } from 'lucide-react';
+import {getCurrentDate} from "../../utils/datetime.ts";
 
 interface TenantFormProps {
     initialData?: Tenant;
@@ -53,12 +54,12 @@ const TenantForm: React.FC<TenantFormProps> = ({
             onSubmit({
                 ...commonParams,
                 p_tenant_id: initialData.id,
-                p_updated_at: new Date().toISOString()
+                p_updated_at: getCurrentDate()
             } as UpdateTenantParams);
         } else {
             onSubmit({
                 ...commonParams,
-                p_created_at: new Date().toISOString()
+                p_created_at: getCurrentDate()
             } as CreateTenantParams);
         }
     };

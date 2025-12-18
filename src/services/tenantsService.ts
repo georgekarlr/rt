@@ -6,6 +6,7 @@ import type {
     UpdateTenantParams,
     ServiceResponse
 } from '../types/tenants';
+import {getCurrentDate} from "../utils/datetime.ts";
 
 export class TenantsService {
 
@@ -42,7 +43,7 @@ export class TenantsService {
                 p_phone: params.p_phone ?? null,
                 p_id_number: params.p_id_number ?? null,
                 p_notes: params.p_notes ?? null,
-                p_created_at: params.p_created_at ?? new Date().toISOString()
+                p_created_at: getCurrentDate()
             };
 
             const { data, error } = await supabase.rpc('rt_create_tenant', rpcParams);
@@ -74,7 +75,7 @@ export class TenantsService {
                 p_phone: params.p_phone ?? null,
                 p_id_number: params.p_id_number ?? null,
                 p_notes: params.p_notes ?? null,
-                p_updated_at: params.p_updated_at ?? new Date().toISOString()
+                p_updated_at: getCurrentDate()
             };
 
             const { error } = await supabase.rpc('rt_update_tenant', rpcParams);

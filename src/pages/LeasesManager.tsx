@@ -11,9 +11,8 @@ import useCurrency from "../hooks/useCurrency.ts";
 import {
     ExtendLeaseParams,
     LeaseListItem,
-    LeaseScheduleItem,
     LeaseStatusFilter,
-    RecordPaymentParams,
+    ProcessAutomaticPaymentParams,
     TerminateLeaseParams
 } from "../types/leasesActions.ts";
 import {LeasesActionService} from "../services/leasesActionService.ts";
@@ -40,8 +39,9 @@ const LeasesManager: React.FC = () => {
     // Main Detail Modal
     const [selectedLease, setSelectedLease] = useState<LeaseListItem | null>(null);
 
-    // Action Modals (triggered from Detail view)
-    const [paymentTarget, setPaymentTarget] = useState<LeaseScheduleItem | null>(null);
+    // Action Modals
+    // For payment, we need the lease AND the calculated outstanding balance for display
+    const [paymentTarget, setPaymentTarget] = useState<{ lease: LeaseListItem, balance: number } | null>(null);
     const [terminationTarget, setTerminationTarget] = useState<LeaseListItem | null>(null);
     const [extensionTarget, setExtensionTarget] = useState<LeaseListItem | null>(null);
 
@@ -69,21 +69,17 @@ const LeasesManager: React.FC = () => {
 
     // 5. Action Handlers
 
-    const handleRecordPayment = async (params: RecordPaymentParams) => {
+    const handleRecordPayment = async (params: ProcessAutomaticPaymentParams) => {
         setIsSubmitting(true);
-        const { error } = await LeasesActionService.recordPayment(params);
+        const { error } = await LeasesActionService.processAutomaticPayment(params);
         setIsSubmitting(false);
 
         if (error) {
             alert(`Error recording payment: ${error}`);
         } else {
             setPaymentTarget(null);
-            // We need to refresh the lease list to update totals
-            fetchLeases();
-            setSelectedLease(null);
-            // NOTE: Ideally, we'd also trigger a refresh inside LeaseDetail,
-            // but closing/reopening or relying on a global refresh key is simpler for this structure.
-            // For better UX, we could force the Detail component to reload its schedule.
+            setSelectedLease(null); // Close detail view to force schedule refresh on re-open
+            fetchLeases(); // Refresh list to update totals/statuses
         }
     };
 
@@ -96,7 +92,7 @@ const LeasesManager: React.FC = () => {
             alert(`Error terminating lease: ${error}`);
         } else {
             setTerminationTarget(null);
-            setSelectedLease(null); // Close detail view as lease state changed drastically
+            setSelectedLease(null);
             fetchLeases();
         }
     };
@@ -110,7 +106,7 @@ const LeasesManager: React.FC = () => {
             alert(`Error extending lease: ${error}`);
         } else {
             setExtensionTarget(null);
-            setSelectedLease(null); // Close detail view to force refresh when reopened
+            setSelectedLease(null);
             fetchLeases();
         }
     };
@@ -255,7 +251,8 @@ const LeasesManager: React.FC = () => {
                 {selectedLease && (
                     <LeaseDetail
                         lease={selectedLease}
-                        onRecordPayment={(item) => setPaymentTarget(item)}
+                        // When "Record Payment" is clicked in details, it passes the current calculated balance
+                        onRecordPayment={(balance) => setPaymentTarget({ lease: selectedLease, balance })}
                         onTerminate={() => setTerminationTarget(selectedLease)}
                         onExtend={() => setExtensionTarget(selectedLease)}
                     />
@@ -270,7 +267,8 @@ const LeasesManager: React.FC = () => {
             >
                 {paymentTarget && (
                     <PaymentForm
-                        scheduleItem={paymentTarget}
+                        lease={paymentTarget.lease}
+                        suggestedAmount={paymentTarget.balance}
                         onSubmit={handleRecordPayment}
                         onCancel={() => setPaymentTarget(null)}
                         isSubmitting={isSubmitting}

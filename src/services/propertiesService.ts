@@ -6,6 +6,7 @@ import type {
     UpdatePropertyParams,
     ServiceResponse
 } from '../types/properties';
+import {getCurrentDate} from "../utils/datetime.ts";
 
 export class PropertiesService {
 
@@ -47,7 +48,7 @@ export class PropertiesService {
                 p_bedrooms: params.p_bedrooms ?? null,
                 p_bathrooms: params.p_bathrooms ?? null,
                 p_sq_ft: params.p_sq_ft ?? null,
-                p_created_at: params.p_created_at ?? new Date().toISOString()
+                p_created_at: getCurrentDate()
             };
 
             const { data, error } = await supabase.rpc('rt_create_property', rpcParams);
@@ -84,7 +85,7 @@ export class PropertiesService {
                 p_bedrooms: params.p_bedrooms ?? null,
                 p_bathrooms: params.p_bathrooms ?? null,
                 p_sq_ft: params.p_sq_ft ?? null,
-                p_updated_at: params.p_updated_at ?? new Date().toISOString()
+                p_updated_at: getCurrentDate()
             };
 
             const { error } = await supabase.rpc('rt_update_property', rpcParams);
