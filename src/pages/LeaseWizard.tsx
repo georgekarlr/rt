@@ -6,9 +6,10 @@ import { LeasesService } from '../services/leasesService';
 import type { Property } from '../types/properties';
 import type { Tenant } from '../types/tenants';
 import type { CreateLeaseParams, FrequencyType } from '../types/leases';
-import { Calendar, CheckCircle2, Home, Loader2, User } from 'lucide-react';
+// Added ChevronLeft/Right/RotateCw for better button UI
+import { Calendar, CheckCircle2, Home, Loader2, User, ChevronRight, ChevronLeft, AlertCircle, RotateCw, List } from 'lucide-react';
 import { SelectPropertyStep, SelectTenantStep, LeaseTermsStep, LeaseSubmissionStep } from '../components/lease-wizard';
-import {getCurrentDate} from "../utils/datetime.ts";
+import { getCurrentDate } from "../utils/datetime.ts";
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -85,12 +86,12 @@ const LeaseWizard: React.FC = () => {
   }, []);
 
   const selectedProperty = useMemo(
-    () => properties.find((p) => p.id === selectedPropertyId) || null,
-    [properties, selectedPropertyId]
+      () => properties.find((p) => p.id === selectedPropertyId) || null,
+      [properties, selectedPropertyId]
   );
   const selectedTenant = useMemo(
-    () => tenants.find((t) => t.id === selectedTenantId) || null,
-    [tenants, selectedTenantId]
+      () => tenants.find((t) => t.id === selectedTenantId) || null,
+      [tenants, selectedTenantId]
   );
 
   const canGoNext = useMemo(() => {
@@ -101,12 +102,12 @@ const LeaseWizard: React.FC = () => {
       const count = Number(paymentCount);
       const isInt = Number.isInteger(count) && count >= 1;
       return (
-        !!startDate &&
-        !!endDate &&
-        !Number.isNaN(amount) &&
-        amount > 0 &&
-        !!frequency &&
-        isInt
+          !!startDate &&
+          !!endDate &&
+          !Number.isNaN(amount) &&
+          amount > 0 &&
+          !!frequency &&
+          isInt
       );
     }
     return true;
@@ -115,7 +116,6 @@ const LeaseWizard: React.FC = () => {
   // Utilities for date arithmetic
   function toDate(d: string): Date | null {
     if (!d) return null;
-    // d is expected to be a datetime-local string (no timezone). Treat as local.
     const dt = new Date(d);
     return Number.isNaN(dt.getTime()) ? null : dt;
   }
@@ -191,12 +191,10 @@ const LeaseWizard: React.FC = () => {
       default:
         endExclusive = addMonths(startDt, count);
     }
-    // Inclusive end is one millisecond before the next period starts
     const inclusive = new Date(endExclusive.getTime() - 1);
     return toDatetimeLocal(inclusive);
   }
 
-  // Auto-calculate end date whenever drivers change
   useEffect(() => {
     const calculated = calculateEndDate(startDate, frequency, paymentCount);
     setEndDate(calculated);
@@ -226,185 +224,229 @@ const LeaseWizard: React.FC = () => {
       return;
     }
     setCreatedLeaseId(res.data || null);
-    // After successful creation: advance to final step and reset form data
-    // so the wizard is ready for a new lease.
     setStep(4);
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900">Lease Wizard</h1>
-        <p className="text-gray-500">Follow the steps to create a new lease.</p>
-      </div>
-
-      {/* Stepper */}
-      <div className="flex items-center gap-4 mb-6 text-sm">
-        <StepBadge active={step === 1} completed={step > 1} icon={Home} label="Property" />
-        <div className="flex-1 h-px bg-gray-200" />
-        <StepBadge active={step === 2} completed={step > 2} icon={User} label="Tenant" />
-        <div className="flex-1 h-px bg-gray-200" />
-        <StepBadge active={step === 3} completed={step > 3} icon={Calendar} label="Terms" />
-        <div className="flex-1 h-px bg-gray-200" />
-        <StepBadge active={step === 4} completed={false} icon={CheckCircle2} label="Created" />
-      </div>
-
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        {loadError && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-700 border border-red-200">
-            {loadError}
+      <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Lease Creation Wizard</h1>
+            <p className="mt-2 text-sm text-gray-600">Complete the steps below to generate a new lease agreement.</p>
           </div>
-        )}
 
-        {step === 1 && (
-          <SelectPropertyStep
-            properties={properties}
-            loading={loadingProps}
-            selectedId={selectedPropertyId}
-            onSelect={setSelectedPropertyId}
-          />
-        )}
+          {/* Stepper */}
+          <div className="relative mb-12">
+            {/* Connecting Line background */}
+            <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 rounded-full -z-10" />
 
-        {step === 2 && (
-          <SelectTenantStep
-            tenants={tenants}
-            loading={loadingTenants}
-            selectedId={selectedTenantId}
-            onSelect={setSelectedTenantId}
-          />
-        )}
-
-        {step === 3 && (
-          <LeaseTermsStep
-            property={selectedProperty}
-            tenant={selectedTenant}
-            startDate={startDate}
-            endDate={endDate}
-            paymentCount={paymentCount}
-            rentAmount={rentAmount}
-            frequency={frequency}
-            frequencyOptions={frequencyOptions}
-            onChange={{ setStartDate, setEndDate, setPaymentCount, setRentAmount, setFrequency }}
-          />
-        )}
-
-        {step === 4 && (
-          <LeaseSubmissionStep
-            createdLeaseId={createdLeaseId}
-            property={selectedProperty}
-            tenant={selectedTenant}
-            startDate={startDate}
-            endDate={endDate}
-            rentAmount={rentAmount}
-            frequency={frequency}
-          />
-        )}
-
-        {/* Navigation */}
-        <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
-          {/* Hide Back on final step */}
-          {step < 4 ? (
-            <button
-              className="px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-              onClick={() => setStep((s) => (s > 1 ? ((s - 1) as WizardStep) : s))}
-              disabled={step === 1 || submitting}
-              type="button"
-            >
-              Back
-            </button>
-          ) : (
-            <div />
-          )}
-
-          {step < 4 && (
-            <button
-              className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-              onClick={() => {
-                if (step === 3) {
-                  handleSubmit();
-                } else {
-                  setStep((s) => ((s + 1) as WizardStep));
-                }
-              }}
-              disabled={!canGoNext || submitting}
-              type="button"
-            >
-              {submitting && step === 3 ? (
-                <>
-                  <Loader2 className="animate-spin" size={16} />
-                  Submitting...
-                </>
-              ) : step === 3 ? (
-                'Create Lease'
-              ) : (
-                'Next'
-              )}
-            </button>
-          )}
-
-          {step === 4 && (
-            <div className="flex items-center gap-2">
-              <button
-                className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-                type="button"
-                onClick={() => {
-                  // Start a new lease creation flow
-                  setCreatedLeaseId(null);
-                  resetForm();
-                  setStep(1);
-                }}
-              >
-                Create lease again
-              </button>
-              <button
-                className="px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
-                type="button"
-                onClick={() => {
-                  resetForm();
-                  navigate('/leases');
-                }}
-              >
-                Go to listing page
-              </button>
+            <div className="flex justify-between w-full">
+              <StepBadge active={step === 1} completed={step > 1} icon={Home} label="Property" index={1} />
+              <StepConnector active={step > 1} />
+              <StepBadge active={step === 2} completed={step > 2} icon={User} label="Tenant" index={2} />
+              <StepConnector active={step > 2} />
+              <StepBadge active={step === 3} completed={step > 3} icon={Calendar} label="Terms" index={3} />
+              <StepConnector active={step > 3} />
+              <StepBadge active={step === 4} completed={false} icon={CheckCircle2} label="Done" index={4} />
             </div>
-          )}
-        </div>
-
-        {submitError && (
-          <div className="mt-4 p-3 rounded-lg bg-red-50 text-red-700 border border-red-200">
-            {submitError}
           </div>
-        )}
+
+          {/* Card Content */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            {/* Main Content Area */}
+            <div className="p-8 min-h-[400px]">
+              {loadError && (
+                  <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-700 border border-red-200 flex items-center gap-3">
+                    <AlertCircle size={20} />
+                    <span>{loadError}</span>
+                  </div>
+              )}
+
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                {step === 1 && (
+                    <SelectPropertyStep
+                        properties={properties}
+                        loading={loadingProps}
+                        selectedId={selectedPropertyId}
+                        onSelect={setSelectedPropertyId}
+                    />
+                )}
+
+                {step === 2 && (
+                    <SelectTenantStep
+                        tenants={tenants}
+                        loading={loadingTenants}
+                        selectedId={selectedTenantId}
+                        onSelect={setSelectedTenantId}
+                    />
+                )}
+
+                {step === 3 && (
+                    <LeaseTermsStep
+                        property={selectedProperty}
+                        tenant={selectedTenant}
+                        startDate={startDate}
+                        endDate={endDate}
+                        paymentCount={paymentCount}
+                        rentAmount={rentAmount}
+                        frequency={frequency}
+                        frequencyOptions={frequencyOptions}
+                        onChange={{ setStartDate, setEndDate, setPaymentCount, setRentAmount, setFrequency }}
+                    />
+                )}
+
+                {step === 4 && (
+                    <LeaseSubmissionStep
+                        createdLeaseId={createdLeaseId}
+                        property={selectedProperty}
+                        tenant={selectedTenant}
+                        startDate={startDate}
+                        endDate={endDate}
+                        rentAmount={rentAmount}
+                        frequency={frequency}
+                    />
+                )}
+              </div>
+
+              {submitError && (
+                  <div className="mt-6 p-4 rounded-xl bg-red-50 text-red-700 border border-red-200 flex items-center gap-3">
+                    <AlertCircle size={20} />
+                    <span>{submitError}</span>
+                  </div>
+              )}
+            </div>
+
+            {/* Footer Navigation */}
+            <div className="bg-gray-50 px-8 py-5 border-t border-gray-200 flex items-center justify-between">
+              {/* Back Button */}
+              <div className="w-32">
+                {step < 4 && step > 1 && (
+                    <button
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+                        onClick={() => setStep((s) => (s > 1 ? ((s - 1) as WizardStep) : s))}
+                        disabled={submitting}
+                        type="button"
+                    >
+                      <ChevronLeft size={16} />
+                      Back
+                    </button>
+                )}
+              </div>
+
+              {/* Next / Action Buttons */}
+              <div>
+                {step < 4 ? (
+                    <button
+                        className={`
+                    flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white rounded-lg shadow-md transition-all
+                    ${canGoNext && !submitting ? 'bg-blue-600 hover:bg-blue-700 hover:shadow-blue-600/30 hover:-translate-y-0.5' : 'bg-gray-300 cursor-not-allowed'}
+                  `}
+                        onClick={() => {
+                          if (step === 3) {
+                            handleSubmit();
+                          } else {
+                            setStep((s) => ((s + 1) as WizardStep));
+                          }
+                        }}
+                        disabled={!canGoNext || submitting}
+                        type="button"
+                    >
+                      {submitting && step === 3 ? (
+                          <>
+                            <Loader2 className="animate-spin" size={18} />
+                            Submitting...
+                          </>
+                      ) : step === 3 ? (
+                          <>Create Lease <CheckCircle2 size={18} /></>
+                      ) : (
+                          <>Next <ChevronRight size={18} /></>
+                      )}
+                    </button>
+                ) : (
+                    <div className="flex items-center gap-3">
+                      <button
+                          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm"
+                          type="button"
+                          onClick={() => {
+                            resetForm();
+                            navigate('/leases');
+                          }}
+                      >
+                        <List size={16} />
+                        Go to listings
+                      </button>
+                      <button
+                          className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-md hover:shadow-blue-600/30 transition-all"
+                          type="button"
+                          onClick={() => {
+                            setCreatedLeaseId(null);
+                            resetForm();
+                            setStep(1);
+                          }}
+                      >
+                        <RotateCw size={16} />
+                        Create Another
+                      </button>
+                    </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
   );
 };
 
+// --- Sub-components for UI ---
+
+function StepConnector({ active }: { active: boolean }) {
+  // This overlay div sits on top of the grey background line in the parent
+  // We use absolute positioning to "fill" the space between badges visually
+  // Note: simpler approach is just to rely on the parent line, but if we want color progression:
+  return (
+      <div className={`flex-1 h-1 transition-colors duration-500 ease-in-out mx-2 self-center rounded-full ${active ? 'bg-blue-600' : 'bg-transparent'}`} />
+  );
+}
+
 function StepBadge({
-  active,
-  completed,
-  icon: Icon,
-  label,
-}: {
+                     active,
+                     completed,
+                     icon: Icon,
+                     label,
+                     index
+                   }: {
   active: boolean;
   completed: boolean;
   icon: React.ComponentType<{ className?: string; size?: number }>;
   label: string;
+  index: number;
 }) {
   return (
-    <div className={`flex items-center gap-2 ${active ? 'text-blue-600' : 'text-gray-500'}`}>
-      <div
-        className={`w-8 h-8 rounded-full flex items-center justify-center border ${
-          active ? 'border-blue-600 bg-blue-50' : completed ? 'border-green-600 bg-green-50' : 'border-gray-300 bg-white'
-        }`}
-      >
-        <Icon size={16} className={completed ? 'text-green-600' : active ? 'text-blue-600' : 'text-gray-500'} />
+      <div className="flex flex-col items-center relative z-10 group cursor-default">
+        <div
+            className={`
+          w-12 h-12 rounded-full flex items-center justify-center border-2 shadow-sm transition-all duration-300
+          ${
+                completed
+                    ? 'bg-green-600 border-green-600 text-white scale-100'
+                    : active
+                        ? 'bg-white border-blue-600 text-blue-600 scale-110 shadow-blue-200'
+                        : 'bg-white border-gray-300 text-gray-400'
+            }
+        `}
+        >
+          <Icon size={20} className={`transition-transform duration-300 ${active ? 'scale-110' : ''}`} />
+        </div>
+        <span
+            className={`
+          absolute top-14 text-xs font-semibold whitespace-nowrap transition-colors duration-300
+          ${active ? 'text-blue-700' : completed ? 'text-green-700' : 'text-gray-400'}
+        `}
+        >
+        {label}
+      </span>
       </div>
-      <span className="text-sm font-medium">{label}</span>
-    </div>
   );
 }
-
-// extracted Step* components moved to src/components/lease-wizard
 
 export default LeaseWizard;
