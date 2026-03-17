@@ -5,13 +5,13 @@ import { FrequencyType } from '../../types/leases';
 import {
   Calendar,
   Clock,
-  DollarSign,
   Hash,
   Building2,
   User,
   ArrowRight,
   Calculator,
-  Repeat
+  Repeat,
+  PhilippinePeso
 } from 'lucide-react';
 
 type FrequencyOption = { label: string; value: FrequencyType };
@@ -183,7 +183,7 @@ const LeaseTermsStep: React.FC<Props> = ({
               <label className="block text-sm font-medium text-gray-700">Rent Amount</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                  <DollarSign size={18} />
+                  <PhilippinePeso size={18} />
                 </div>
                 <input
                     type="number"

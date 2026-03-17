@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCurrency } from '../../hooks/useCurrency';
 import { formatCurrency } from '../../utils/timezone';
-import { DollarSign, CheckCircle2, CalendarClock } from 'lucide-react';
+import {CheckCircle2, CalendarClock, PhilippinePeso} from 'lucide-react';
 import {LeaseListItem, ProcessAutomaticPaymentParams} from "../../types/leasesActions.ts";
 
 interface PaymentFormProps {
@@ -62,7 +62,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ lease, suggestedAmount = 0, o
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount</label>
                     <div className="relative">
-                        <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                        <PhilippinePeso className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                         <input
                             type="number"
                             step="0.01"

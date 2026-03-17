@@ -116,6 +116,7 @@ const LeasesManager: React.FC = () => {
         const l = label.toLowerCase();
         if (l.includes('active')) return 'bg-green-100 text-green-800';
         if (l.includes('expiring')) return 'bg-orange-100 text-orange-800';
+        if (l.includes('expired')) return 'bg-gray-100 text-gray-800';
         if (l.includes('terminated')) return 'bg-red-100 text-red-800';
         return 'bg-gray-100 text-gray-800';
     };
@@ -154,6 +155,7 @@ const LeasesManager: React.FC = () => {
                         <option value="">All Statuses</option>
                         <option value="active">Active</option>
                         <option value="expiring">Expiring Soon</option>
+                        <option value="expired">Expired</option>
                         <option value="terminated">Terminated</option>
                     </select>
                 </div>
@@ -180,6 +182,7 @@ const LeasesManager: React.FC = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tenant / Property</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rent</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Balance</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Action</th>
                             </tr>
@@ -200,6 +203,11 @@ const LeasesManager: React.FC = () => {
                                         {formatCurrency(lease.rent_amount, currency)}
                                         <span className="text-xs text-gray-500 font-normal"> / {lease.payment_frequency}</span>
                                     </td>
+                                    <td className="px-6 py-4 text-sm font-semibold">
+                                        <span className={lease.outstanding_balance > 0 ? 'text-red-600' : 'text-green-600'}>
+                                            {formatCurrency(lease.outstanding_balance, currency)}
+                                        </span>
+                                    </td>
                                     <td className="px-6 py-4">
                                             <span className={`px-2 py-1 rounded-full text-xs font-bold capitalize ${getLeaseStatusBadge(lease.status_label)}`}>
                                                 {lease.status_label}
@@ -210,7 +218,7 @@ const LeasesManager: React.FC = () => {
                                     </td>
                                 </tr>
                             ))}
-                            {leases.length === 0 && <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">No leases found.</td></tr>}
+                            {leases.length === 0 && <tr><td colSpan={6} className="px-6 py-12 text-center text-gray-500">No leases found.</td></tr>}
                             </tbody>
                         </table>
                     </div>
@@ -227,8 +235,15 @@ const LeasesManager: React.FC = () => {
                                     <Home size={14} className="mr-1" /> {lease.property_name}
                                 </div>
                                 <div className="flex justify-between items-end border-t border-gray-100 pt-2 mt-2">
-                                    <div className="text-xs text-gray-500">
-                                        Ends: {new Date(lease.end_date).toLocaleDateString()}
+                                    <div className="flex flex-col">
+                                        <div className="text-xs text-gray-500">
+                                            Ends: {new Date(lease.end_date).toLocaleDateString()}
+                                        </div>
+                                        {lease.outstanding_balance > 0 && (
+                                            <div className="text-xs font-bold text-red-600">
+                                                Balance: {formatCurrency(lease.outstanding_balance, currency)}
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="font-bold text-gray-900">
                                         {formatCurrency(lease.rent_amount, currency)}

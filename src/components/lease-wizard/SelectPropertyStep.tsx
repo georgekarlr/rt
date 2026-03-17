@@ -6,9 +6,10 @@ import {
     Building2,
     CheckCircle2,
     Lock,
-    DollarSign,
-    AlertCircle
+    AlertCircle, PhilippinePeso
 } from 'lucide-react';
+import { formatCurrency } from '../../utils/timezone';
+import useCurrency from '../../hooks/useCurrency';
 
 type Props = {
     properties: Property[];
@@ -18,6 +19,9 @@ type Props = {
 };
 
 const SelectPropertyStep: React.FC<Props> = ({ properties, loading, selectedId, onSelect }) => {
+
+    const { currency } = useCurrency();
+
     return (
         <div className="animate-in fade-in duration-500">
             <div className="mb-6">
@@ -124,9 +128,9 @@ const SelectPropertyStep: React.FC<Props> = ({ properties, loading, selectedId, 
 
                                     {/* Rent */}
                                     <div className="flex items-center gap-2 text-sm">
-                                        <DollarSign size={16} className="shrink-0 text-gray-400" />
+                                        <PhilippinePeso size={16} className="shrink-0 text-gray-400" />
                                         <span className={`font-medium ${isOccupied ? 'text-gray-500' : 'text-gray-900'}`}>
-                      ${Number(p.market_rent).toLocaleString()}
+                      {formatCurrency(Number(p.market_rent), currency)}
                                             <span className="text-gray-500 font-normal"> / month (market)</span>
                     </span>
                                     </div>
