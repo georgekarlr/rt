@@ -9,14 +9,16 @@ export interface ServiceResponse<T> {
 // --- Nested JSON Structures ---
 
 export interface ExpiringLease {
-    id: number;
+    lease_id: string; // Changed from id: number to lease_id: string (UUID)
     property_name: string;
     tenant_name: string;
     end_date: string; // ISO Date String
+    status_label: string; // Added status_label
 }
 
 export interface OverduePayment {
-    id: number;
+    schedule_id: string; // Changed from id: number to schedule_id: string (UUID)
+    lease_id: string; // Added lease_id
     property_name: string;
     tenant_name: string;
     due_date: string; // ISO Date String

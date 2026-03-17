@@ -11,7 +11,7 @@ export type FrequencyType = 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year
 export type ScheduleStatus = 'pending' | 'paid' | 'partially_paid' | 'overdue' | 'voided';
 
 // Valid status filters for searching leases
-export type LeaseStatusFilter = 'active' | 'terminated' | 'expiring' | null;
+export type LeaseStatusFilter = 'active' | 'terminated' | 'expiring' | 'expired' | null;
 
 // --- Entity Types ---
 
@@ -24,6 +24,7 @@ export interface LeaseListItem {
     rent_amount: number;
     payment_frequency: FrequencyType;
     total_paid: number;
+    outstanding_balance: number; // NEW COLUMN
     status_label: string; // Computed label (e.g., 'Expiring Soon', 'Terminated')
 }
 

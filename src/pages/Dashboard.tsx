@@ -3,13 +3,12 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
     Home,
     Users,
-    DollarSign,
     AlertCircle,
     Clock,
     CheckCircle2,
     PieChart,
     RefreshCw,
-    Calendar as CalendarIcon
+    Calendar as CalendarIcon, PhilippinePeso
 } from 'lucide-react';
 import {DashboardStats} from "../types/dashboard.ts";
 import {DashboardService} from "../services/dashboardService.ts";
@@ -189,7 +188,7 @@ const RentDashboard: React.FC = () => {
                     {/* 2. Financial Section */}
                     <div>
                         <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                            <DollarSign className="mr-2 text-green-500" size={20} /> Financial Performance
+                            <PhilippinePeso className="mr-2 text-green-500" size={20} /> Financial Performance
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
@@ -255,7 +254,7 @@ const RentDashboard: React.FC = () => {
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
                                         {stats.overdue_data.map((item) => (
-                                            <tr key={item.id} className="hover:bg-red-50/20 transition-colors">
+                                            <tr key={item.schedule_id} className="hover:bg-red-50/20 transition-colors">
                                                 <td className="px-6 py-3">
                                                     <div className="text-sm font-medium text-gray-900">{item.tenant_name}</div>
                                                     <div className="text-xs text-gray-500">{item.property_name}</div>
@@ -302,7 +301,7 @@ const RentDashboard: React.FC = () => {
                                         </thead>
                                         <tbody className="divide-y divide-gray-100">
                                         {stats.expiring_leases_data.map((lease) => (
-                                            <tr key={lease.id} className="hover:bg-yellow-50/20 transition-colors">
+                                            <tr key={lease.lease_id} className="hover:bg-yellow-50/20 transition-colors">
                                                 <td className="px-6 py-3 text-sm font-medium text-gray-900">
                                                     {lease.tenant_name}
                                                 </td>

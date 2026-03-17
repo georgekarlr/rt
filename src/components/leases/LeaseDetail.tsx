@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LeaseListItem, LeaseScheduleItem } from '../../types/leasesActions';
 import { useCurrency } from '../../hooks/useCurrency';
 import { formatCurrency } from '../../utils/timezone';
-import { User, Home, Calendar, DollarSign, CheckCircle2, AlertCircle } from 'lucide-react';
+import {User, Home, Calendar, CheckCircle2, AlertCircle, PhilippinePeso} from 'lucide-react';
 import {LeasesActionService} from "../../services/leasesActionService.ts";
 
 interface LeaseDetailProps {
@@ -28,11 +28,7 @@ const LeaseDetail: React.FC<LeaseDetailProps> = ({ lease, onRecordPayment, onTer
     }, [lease.id]);
 
     // Calculate total outstanding balance
-    const totalOutstanding = useMemo(() => {
-        return schedule.reduce((sum, item) => {
-            return item.status !== 'voided' ? sum + item.balance : sum;
-        }, 0);
-    }, [schedule]);
+    const totalOutstanding = lease.outstanding_balance;
 
     const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString();
 
@@ -47,6 +43,7 @@ const LeaseDetail: React.FC<LeaseDetailProps> = ({ lease, onRecordPayment, onTer
     };
 
     const isTerminated = lease.status_label.toLowerCase().includes('terminated');
+    const isExpired = lease.status_label.toLowerCase().includes('expired');
 
     return (
         <div className="space-y-6">
@@ -77,7 +74,7 @@ const LeaseDetail: React.FC<LeaseDetailProps> = ({ lease, onRecordPayment, onTer
                         </div>
                     </div>
                     <div className="flex items-center">
-                        <DollarSign className="text-gray-400 mr-2" size={18} />
+                        <PhilippinePeso className="text-gray-400 mr-2" size={18} />
                         <div>
                             <p className="text-xs text-gray-500 uppercase">Rent</p>
                             <p className="text-sm font-semibold text-gray-900">
@@ -106,11 +103,19 @@ const LeaseDetail: React.FC<LeaseDetailProps> = ({ lease, onRecordPayment, onTer
                             onClick={() => onRecordPayment(totalOutstanding)}
                             className="px-4 py-2 text-sm text-white bg-green-600 hover:bg-green-700 rounded-lg font-medium shadow-sm transition-colors flex items-center"
                         >
-                            <DollarSign size={16} className="mr-1" /> Record Payment
+                            <PhilippinePeso size={16} className="mr-1" /> Record Payment
                         </button>
                     </div>
                 )}
             </div>
+
+            {/* Expired Status Notice */}
+            {isExpired && (
+                <div className="flex items-center bg-gray-100 border border-gray-200 p-3 rounded-lg text-sm text-gray-800">
+                    <Calendar size={18} className="mr-2" />
+                    <span>This lease has expired. You can <strong>Extend Lease</strong> to continue the agreement.</span>
+                </div>
+            )}
 
             {/* Total Balance Indicator */}
             {totalOutstanding > 0 && !isTerminated && (
